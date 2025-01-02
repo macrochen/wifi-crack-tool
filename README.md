@@ -241,6 +241,33 @@ Tips：支持Win10、Win11、Linux，MacOS暂不支持
    pyinstaller -F -w wifi_crack_tool.py
    ```
 
+### macOS
+
+1. 安装依赖
+
+```shell
+# 创建虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+```
+
+2. 编译 UI 文件
+
+```shell
+pyside6-uic wifi_crack_tool_gui.ui -o wifi_crack_tool_gui.py
+```
+
+3. 运行程序
+
+```shell
+sudo python3 wifi_crack_tool.py
+```
+
+注意：在 macOS 上需要使用 sudo 权限来操作 WiFi 网络。
+
 ## 更新日志
 
 ### v1.2.5

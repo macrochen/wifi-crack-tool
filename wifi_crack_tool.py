@@ -4,10 +4,16 @@ Author: 白恒aead
 Repositories: https://github.com/baihengaead/wifi-crack-tool
 Version: 1.2.5
 """
-import os,sys,datetime,time,threading,ctypes,json
+import os
+import sys
+
+# 添加当前目录到 Python 路径
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import datetime,time,threading,ctypes,json
 import platform
 
-from pywifi import const,PyWiFi,Profile
+from pywifi import const, PyWiFi, Profile
 from pywifi.iface import Interface
 
 import pyperclip
@@ -671,12 +677,12 @@ if __name__ == "__main__":
         system = platform.system()
         if system == 'Windows':
             print('当前系统是 Windows')
-            import win32api,win32security,win32event # type: ignore
+            import win32api,win32security,win32event
             #------------------- 互斥锁 -----------------------#
             MUTEX_NAME = "Global/wifi_crack_tool_mutex"
             def acquire_mutex():
                 sa = win32security.SECURITY_ATTRIBUTES()
-                sa.bInheritHandle = False  # 确保互斥量句柄不会被继承
+                sa.bInheritHandle = False
                 mutex = win32event.CreateMutex(sa, False, MUTEX_NAME)
                 last_error = win32api.GetLastError()
                 if last_error == 183:
@@ -684,7 +690,6 @@ if __name__ == "__main__":
                 elif last_error != 0:
                     raise ctypes.WinError(last_error)
                 return mutex
-            #==================================================#
             
             __mutex = None
             if PyWiFi().interfaces().__len__() <= 1:
@@ -700,17 +705,16 @@ if __name__ == "__main__":
             def acquire_lock():
                 lock = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT)
                 try:
-                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB) # type: ignore
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     return lock
                 except IOError:
                     return None
 
             def release_lock(lock):
-                fcntl.flock(lock, fcntl.LOCK_UN) # type: ignore
+                fcntl.flock(lock, fcntl.LOCK_UN)
                 os.close(lock)
                 os.remove(LOCKFILE)
-            #==================================================#
-                        
+                
             __lock = None
             if PyWiFi().interfaces().__len__() <= 1:
                 __lock = acquire_lock()
@@ -718,8 +722,28 @@ if __name__ == "__main__":
             window = MainWindow(__lock)
             
         elif system == 'Darwin':  # macOS
-            print('当前系统是 macOS, 暂不支持')
-            sys.exit()
+            print('当前系统是 macOS')
+            import fcntl
+            #------------------- 互斥锁 -----------------------#
+            LOCKFILE = "/tmp/wifi_crack_tool.lock"
+            def acquire_lock():
+                lock = os.open(LOCKFILE, os.O_RDWR | os.O_CREAT)
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    return lock
+                except IOError:
+                    return None
+
+            def release_lock(lock):
+                fcntl.flock(lock, fcntl.LOCK_UN)
+                os.close(lock)
+                os.remove(LOCKFILE)
+                
+            __lock = None
+            if PyWiFi().interfaces().__len__() <= 1:
+                __lock = acquire_lock()
+                
+            window = MainWindow(__lock)
         else:
             print(f'当前系统为 {system}, 暂不支持')
             sys.exit()
