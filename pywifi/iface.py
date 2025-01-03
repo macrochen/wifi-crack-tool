@@ -101,3 +101,11 @@ class Interface:
         except Exception as e:
             self._logger.error(f"Remove profiles error: {e}")
             return False
+
+    def add_network_profile(self, params):
+        """Add the AP profile for connecting to afterward."""
+        return params
+
+    def remove_network_profile(self, profile):
+        """Remove the AP profile."""
+        return wifiutil.remove_network_profile(profile)

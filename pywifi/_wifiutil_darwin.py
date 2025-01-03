@@ -68,7 +68,8 @@ def wifi_get_interfaces():
 # macOS specific constants
 display_str_to_key = {
     'WPA': const.AKM_TYPE_WPA,
-    'WPA2': const.AKM_TYPE_WPA2,
-    'WPA3': const.AKM_TYPE_WPA3,
+    'WPA2': const.AKM_TYPE_WPA2PSK,
+    'WPA3': const.AKM_TYPE_WPA3SAE,
+    'OPEN': const.AKM_TYPE_NONE,
     'NONE': const.AKM_TYPE_NONE
 }

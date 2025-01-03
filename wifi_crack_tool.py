@@ -6,6 +6,8 @@ Version: 1.2.5
 """
 import os
 import sys
+import traceback
+import subprocess
 
 # 添加当前目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -539,12 +541,24 @@ class WifiCrackTool:
                 self.win.reset_controls_state.send()
                 return False
         
-        def crack(self,ssid:str):
+        def crack(self, ssid:str):
             '''
             破解wifi
             :ssid wifi名称
             '''
             try:
+                # 首先检查是否是当前已连接的网络
+                try:
+                    cmd = ['networksetup', '-getairportnetwork', 'en0']
+                    output = subprocess.check_output(cmd, universal_newlines=True)
+                    if 'Current Wi-Fi Network' in output:
+                        current_ssid = output.split(': ')[-1].strip()
+                        if current_ssid == ssid:
+                            self.win.show_msg.send(f"跳过当前已连接的网络[{ssid}]，无需破解\n\n", "blue")
+                            return True if not self.is_auto else "已连接"
+                except Exception as e:
+                    self.win.show_msg.send(f"检查当前网络状态时出错: {e}\n", "red")
+
                 self.iface.disconnect()  # 断开所有连接
                 self.win.show_msg.send("正在断开现有连接...\n","black")
                 time.sleep(1)
@@ -630,6 +644,9 @@ class WifiCrackTool:
                 elif platform.system() == "Linux":
                     from pywifi import _wifiutil_linux
                     akm_dict = _wifiutil_linux.display_str_to_key
+                elif platform.system() == "Darwin":  # macOS
+                    from pywifi import _wifiutil_darwin
+                    akm_dict = _wifiutil_darwin.display_str_to_key
                 if akm in akm_dict:
                     akm_v = akm_dict[akm]
                 else:
@@ -665,8 +682,18 @@ class WifiCrackTool:
                     return False
 
             except Exception as r:
-                self.win.show_error.send('错误警告','连接wifi过程中发生未知错误 %s' %(r))
-                self.win.show_msg.send(f"[错误]连接wifi过程中发生未知错误 {r}\n\n","red")
+                error_msg = f"[错误]连接wifi过程中发生未知错误: {r}\n"
+                error_msg += "详细错误信息:\n"
+                error_msg += traceback.format_exc()  # 获取完整的错误堆栈
+                error_msg += "\n"
+                
+                # 显示错误弹窗
+                self.win.show_error.send('错误警告', f'连接wifi过程中发生未知错误 {r}')
+                
+                # 在日志中记录详细错误信息
+                self.win.show_msg.send(error_msg, "red")
+                
+                # 重置控件状态
                 self.win.reset_controls_state.send()
                 return False
 
